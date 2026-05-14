@@ -1,0 +1,18 @@
+{
+  "name": "stockflow-auth",
+  "version": "1.0.0",
+  "description": "Functional login and register pages for a stock prediction website.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "stock",
+    "auth",
+    "login",
+    "register"
+  ],
+  "author": "",
+  "license": "MIT"
+}
