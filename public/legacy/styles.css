@@ -1,0 +1,232 @@
+:root {
+  --ink: #13233a;
+  --muted: #5d687a;
+  --line: #d9e0ea;
+  --blue: #2468e8;
+  --green: #15964d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.auth-shell {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  padding: 44px 20px 72px;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.95), transparent 24%),
+    linear-gradient(135deg, #f7fbff 0%, #ecf5ff 48%, #f9fcff 100%);
+}
+
+.auth-shell::before,
+.auth-shell::after {
+  content: "";
+  position: absolute;
+  inset: auto -12% -18% -12%;
+  height: 56%;
+  background: linear-gradient(145deg, transparent 0 37%, rgba(47, 130, 220, 0.12) 37.2% 45%, transparent 45.2% 55%, rgba(91, 161, 227, 0.12) 55.2% 62%, transparent 62.2%);
+}
+
+.register-theme {
+  background:
+    radial-gradient(circle at 80% 13%, rgba(255, 255, 255, 0.96), transparent 24%),
+    linear-gradient(135deg, #f7fbf5 0%, #eef8ee 48%, #fbfdf9 100%);
+}
+
+.register-theme::before,
+.register-theme::after {
+  background: linear-gradient(145deg, transparent 0 37%, rgba(36, 153, 79, 0.12) 37.2% 45%, transparent 45.2% 55%, rgba(73, 178, 97, 0.11) 55.2% 62%, transparent 62.2%);
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 590px);
+  padding: 58px;
+  border: 1px solid rgba(207, 216, 228, 0.78);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 55px rgba(29, 46, 72, 0.12);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  clip-path: polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  background: var(--blue);
+  color: #fff;
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.register-theme .brand-mark {
+  background: var(--green);
+}
+
+.brand h1,
+.brand p,
+.form-heading h2,
+.form-heading p {
+  margin: 0;
+}
+
+.brand h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+
+.brand p,
+.form-heading p,
+.switch-copy {
+  color: var(--muted);
+}
+
+.form-heading {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.form-heading h2 {
+  font-size: clamp(1.85rem, 4vw, 2.45rem);
+  line-height: 1.1;
+}
+
+.auth-form {
+  display: grid;
+  gap: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 9px;
+}
+
+.field input {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 14px;
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(36, 104, 232, 0.1);
+}
+
+.register-theme .field input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(21, 150, 77, 0.1);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #39465a;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--blue);
+}
+
+.ghost-link {
+  border: 0;
+  background: transparent;
+  color: #0965f4;
+  padding: 0;
+  cursor: pointer;
+}
+
+.green-link {
+  color: var(--green);
+}
+
+.primary-button {
+  min-height: 60px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--blue), #1557d7);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button.green {
+  background: linear-gradient(180deg, var(--green), #0c8440);
+}
+
+.message {
+  min-height: 20px;
+  margin: -4px 0;
+  color: #be123c;
+  text-align: center;
+}
+
+.message.success {
+  color: var(--green);
+}
+
+.switch-copy {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+footer {
+  position: absolute;
+  z-index: 1;
+  bottom: 24px;
+  color: var(--muted);
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 680px) {
+  .auth-card {
+    padding: 34px 22px 30px;
+  }
+
+  .form-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

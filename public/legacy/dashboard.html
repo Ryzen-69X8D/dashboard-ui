@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockFlow Dashboard</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <header class="topbar">
+        <a class="brand" href="#dashboard">Stock<span>Flow</span></a>
+        <nav aria-label="Main navigation">
+          <a class="active" href="#dashboard">Dashboard</a>
+          <a href="#markets">Markets</a>
+          <a href="#predictions">Predictions</a>
+          <a href="#portfolio">Portfolio</a>
+          <a href="#news">News</a>
+        </nav>
+        <div class="account">
+          <span id="userLabel">Loading...</span>
+          <button type="button" id="logoutButton">Logout</button>
+        </div>
+      </header>
+
+      <section class="hero" id="dashboard">
+        <div>
+          <h1>AI-Powered Stock Predictions</h1>
+          <p>Real-time market analysis for smarter portfolio decisions</p>
+          <div class="hero-actions">
+            <a href="#predictions">Start Trading</a>
+            <a class="secondary-button" href="#markets">View Markets</a>
+          </div>
+        </div>
+      </section>
+
+      <main class="dashboard-content">
+        <h2 id="markets">Market Overview</h2>
+        <section class="market-grid" aria-label="Market overview">
+          <article class="market-card"><h3>S&amp;P 500</h3><strong>3,533.50</strong><p class="success">Up 10.99%</p><div class="mini-chart"></div></article>
+          <article class="market-card"><h3>NASDAQ</h3><strong>23,909.53</strong><p class="success">Up 10.28%</p><div class="mini-chart"></div></article>
+          <article class="market-card"><h3>DOW</h3><strong>2,569.37</strong><p class="danger">Down 0.72%</p><div class="mini-chart mini-chart-danger"></div></article>
+          <article class="market-card"><h3>RUSSELL</h3><strong>3,330.60</strong><p class="danger">Down 9.83%</p><div class="mini-chart mini-chart-danger"></div></article>
+        </section>
+
+        <section class="ticker" aria-label="Market ticker">
+          <span>AAPL <b>+2.1%</b></span>
+          <span class="loss">TSLA <b>-1.5%</b></span>
+          <span>NVDA <b>+11.8%</b></span>
+          <span class="loss">DOW <b>-3.2%</b></span>
+        </section>
+
+        <section class="panel-grid">
+          <section class="panel"><h3>Top Gainers</h3><div class="stock-row"><span>1</span><span>S&amp;P 500</span><strong class="badge success-badge">+2.75%</strong></div><div class="stock-row"><span>2</span><span>NASDAQ</span><strong class="badge success-badge">+0.62%</strong></div><div class="stock-row"><span>3</span><span>NVDA</span><strong class="badge success-badge">+0.95%</strong></div></section>
+          <section class="panel"><h3>Top Losers</h3><div class="stock-row"><span>1</span><span>NVDA</span><strong class="badge danger-badge">-1.36%</strong></div><div class="stock-row"><span>2</span><span>NASDAQ</span><strong class="badge danger-badge">-1.82%</strong></div><div class="stock-row"><span>3</span><span>DOW</span><strong class="badge danger-badge">-3.65%</strong></div></section>
+          
+          <section class="panel glass-panel" id="predictions">
+            <h3>AI Next-Day Prediction</h3>
+            <p>Powered by autoData Engine</p>
+            
+            <form id="predictionForm" class="predict-form">
+              <input type="text" name="ticker" placeholder="Ticker (e.g., RELIANCE.NS)" required />
+              <div class="input-grid">
+                <input type="number" step="0.01" name="Open" placeholder="Open Price" required />
+                <input type="number" step="0.01" name="High" placeholder="High Price" required />
+                <input type="number" step="0.01" name="Low" placeholder="Low Price" required />
+                <input type="number" step="0.01" name="Close" placeholder="Close Price" required />
+                <input type="number" step="1" name="Volume" placeholder="Volume" class="span-2" required />
+              </div>
+              <button type="submit" class="primary-button predict-btn">Run Prediction</button>
+            </form>
+
+            <div id="predictionResult" class="prediction-result hidden">
+              <h4>Predicted Next Close</h4>
+              <strong id="predictedPrice">--</strong>
+            </div>
+          </section>
+
+          <section class="panel portfolio-panel" id="portfolio"><h3>Portfolio Summary</h3><p>Total Portfolio Value</p><strong>$24,653.00</strong><p>Day Change <span class="success">Up 8.78%</span></p><div class="donut"></div></section>
+        </section>
+
+        <section class="bottom-grid">
+          <section class="panel" id="news"><h3>News &amp; Sentiment</h3><p>Headlines influence stock sentiment.</p><p>Market news sentiment is positive.</p></section>
+          <section class="panel"><h3>AI Insights</h3><p>Bite-sized AI-generated market commentary and predictions.</p><p>Generated insights update with live stock movement.</p></section>
+          <section class="panel"><h3>Economic Calendar</h3><p>Economic Event <span>4.5 impact</span></p><p>Economic Event <span>5.5 impact</span></p></section>
+          <section class="panel"><h3>Sector Performance</h3><div class="bar-chart"><span style="height: 45%"></span><span style="height: 70%"></span><span style="height: 82%"></span><span style="height: 60%"></span><span style="height: 95%"></span></div></section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/dashboard.js"></script>
+  </body>
+</html>
