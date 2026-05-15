@@ -53,7 +53,29 @@
         <section class="panel-grid">
           <section class="panel"><h3>Top Gainers</h3><div class="stock-row"><span>1</span><span>S&amp;P 500</span><strong class="badge success-badge">+2.75%</strong></div><div class="stock-row"><span>2</span><span>NASDAQ</span><strong class="badge success-badge">+0.62%</strong></div><div class="stock-row"><span>3</span><span>NVDA</span><strong class="badge success-badge">+0.95%</strong></div></section>
           <section class="panel"><h3>Top Losers</h3><div class="stock-row"><span>1</span><span>NVDA</span><strong class="badge danger-badge">-1.36%</strong></div><div class="stock-row"><span>2</span><span>NASDAQ</span><strong class="badge danger-badge">-1.82%</strong></div><div class="stock-row"><span>3</span><span>DOW</span><strong class="badge danger-badge">-3.65%</strong></div></section>
-          <section class="panel" id="predictions"><h3>Trending Stocks</h3><div class="trend-grid"><article><strong>AAPL</strong><p class="success">$51.60</p><small>1.38M Volume</small></article><article><strong>TSLA</strong><p>$197.90</p><small>1.36K Volume</small></article><article><strong>NVDA</strong><p class="danger">$14.23</p><small>4.88K Volume</small></article><article><strong>RIVN</strong><p>$29.30</p><small>4.88K Volume</small></article></div></section>
+          
+          <section class="panel glass-panel" id="predictions">
+            <h3>AI Next-Day Prediction</h3>
+            <p>Powered by autoData Engine</p>
+            
+            <form id="predictionForm" class="predict-form">
+              <input type="text" name="ticker" placeholder="Ticker (e.g., RELIANCE.NS)" required />
+              <div class="input-grid">
+                <input type="number" step="0.01" name="Open" placeholder="Open Price" required />
+                <input type="number" step="0.01" name="High" placeholder="High Price" required />
+                <input type="number" step="0.01" name="Low" placeholder="Low Price" required />
+                <input type="number" step="0.01" name="Close" placeholder="Close Price" required />
+                <input type="number" step="1" name="Volume" placeholder="Volume" class="span-2" required />
+              </div>
+              <button type="submit" class="primary-button predict-btn">Run Prediction</button>
+            </form>
+
+            <div id="predictionResult" class="prediction-result hidden">
+              <h4>Predicted Next Close</h4>
+              <strong id="predictedPrice">--</strong>
+            </div>
+          </section>
+
           <section class="panel portfolio-panel" id="portfolio"><h3>Portfolio Summary</h3><p>Total Portfolio Value</p><strong>$24,653.00</strong><p>Day Change <span class="success">Up 8.78%</span></p><div class="donut"></div></section>
         </section>
 

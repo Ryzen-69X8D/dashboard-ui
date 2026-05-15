@@ -9,13 +9,31 @@ const DATA_DIR = path.join(__dirname, "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const sessions = new Map();
 
+// ── Load .env manually (no extra deps) ───────────────────────────────────────
+try {
+  const envText = require("fs").readFileSync(path.join(__dirname, ".env"), "utf8");
+  envText.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) return;
+    const key = trimmed.slice(0, eq).trim();
+    const val = trimmed.slice(eq + 1).trim();
+    if (key && !(key in process.env)) process.env[key] = val;
+  });
+} catch {}
+
+const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
+
+// ── MIME types ────────────────────────────────────────────────────────────────
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8"
+  ".json": "application/json; charset=utf-8",
 };
 
+// ── Data helpers ──────────────────────────────────────────────────────────────
 async function ensureStore() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
@@ -35,6 +53,7 @@ async function writeUsers(users) {
   await fs.writeFile(USERS_FILE, `${JSON.stringify(users, null, 2)}\n`, "utf8");
 }
 
+// ── Auth helpers ──────────────────────────────────────────────────────────────
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, "sha512").toString("hex");
   return `${salt}:${hash}`;
@@ -97,8 +116,101 @@ async function getRequestBody(req) {
   });
 }
 
+// ── ML proxy ──────────────────────────────────────────────────────────────────
+// Forwards POST /api/ml/predict → FastAPI backend /predict
+// FastAPI runs separately (python -m uvicorn app.main:app --port 8000)
+function proxyToBackend(backendPath, reqBody) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(BACKEND_API_URL);
+    const isHttps = url.protocol === "https:";
+    const transport = isHttps ? require("https") : require("http");
+    const payload = JSON.stringify(reqBody);
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
+      path: backendPath,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+      },
+    };
+
+    const proxyReq = transport.request(options, (proxyRes) => {
+      let data = "";
+      proxyRes.on("data", (chunk) => (data += chunk));
+      proxyRes.on("end", () => {
+        try {
+          resolve({ status: proxyRes.statusCode, body: JSON.parse(data) });
+        } catch {
+          resolve({ status: 502, body: { message: "Invalid response from ML backend." } });
+        }
+      });
+    });
+
+    proxyReq.on("error", (err) => {
+      reject(new Error(`ML backend unreachable (${BACKEND_API_URL}): ${err.message}`));
+    });
+
+    proxyReq.setTimeout(15000, () => {
+      proxyReq.destroy();
+      reject(new Error("ML backend request timed out."));
+    });
+
+    proxyReq.write(payload);
+    proxyReq.end();
+  });
+}
+
+// ── API router ────────────────────────────────────────────────────────────────
 async function handleApi(req, res) {
   try {
+    // ── ML prediction proxy ───────────────────────────────────────────────────
+    if (req.method === "POST" && req.url === "/api/ml/predict") {
+      const body = await getRequestBody(req);
+
+      // Basic field validation before forwarding
+      const required = ["Open", "High", "Low", "Close", "Volume"];
+      const missing = required.filter((k) => body[k] == null);
+      if (missing.length) {
+        return sendJson(res, 400, { message: `Missing fields: ${missing.join(", ")}` });
+      }
+
+      try {
+        const { status, body: mlBody } = await proxyToBackend("/predict", body);
+        return sendJson(res, status, mlBody);
+      } catch (err) {
+        return sendJson(res, 503, {
+          message: err.message,
+          hint: `Make sure the FastAPI backend is running at ${BACKEND_API_URL}`,
+        });
+      }
+    }
+
+    // ── ML health check ───────────────────────────────────────────────────────
+    if (req.method === "GET" && req.url === "/api/ml/health") {
+      try {
+        const { status, body: mlBody } = await new Promise((resolve, reject) => {
+          const url = new URL(BACKEND_API_URL);
+          const transport = url.protocol === "https:" ? require("https") : require("http");
+          const options = { hostname: url.hostname, port: url.port || 80, path: "/health", method: "GET" };
+          const r = transport.request(options, (resp) => {
+            let d = "";
+            resp.on("data", (c) => (d += c));
+            resp.on("end", () => resolve({ status: resp.statusCode, body: JSON.parse(d) }));
+          });
+          r.on("error", reject);
+          r.setTimeout(5000, () => { r.destroy(); reject(new Error("timeout")); });
+          r.end();
+        });
+        return sendJson(res, status, mlBody);
+      } catch {
+        return sendJson(res, 503, { status: "offline", message: `Cannot reach ${BACKEND_API_URL}` });
+      }
+    }
+
+    // ── Register ──────────────────────────────────────────────────────────────
     if (req.method === "POST" && req.url === "/api/register") {
       const body = await getRequestBody(req);
       const name = String(body.name || "").trim();
@@ -121,17 +233,18 @@ async function handleApi(req, res) {
         name,
         email,
         passwordHash: hashPassword(password),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
       users.push(user);
       await writeUsers(users);
 
       const token = createSession(user.id);
       return sendJson(res, 201, { user: publicUser(user) }, {
-        "Set-Cookie": `stockflow_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`
+        "Set-Cookie": `stockflow_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`,
       });
     }
 
+    // ── Login ─────────────────────────────────────────────────────────────────
     if (req.method === "POST" && req.url === "/api/login") {
       const body = await getRequestBody(req);
       const email = String(body.email || "").trim().toLowerCase();
@@ -145,18 +258,20 @@ async function handleApi(req, res) {
 
       const token = createSession(user.id);
       return sendJson(res, 200, { user: publicUser(user) }, {
-        "Set-Cookie": `stockflow_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`
+        "Set-Cookie": `stockflow_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`,
       });
     }
 
+    // ── Logout ────────────────────────────────────────────────────────────────
     if (req.method === "POST" && req.url === "/api/logout") {
       const token = parseCookies(req).stockflow_session;
       if (token) sessions.delete(token);
       return sendJson(res, 200, { message: "Logged out." }, {
-        "Set-Cookie": "stockflow_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
+        "Set-Cookie": "stockflow_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
       });
     }
 
+    // ── Me ────────────────────────────────────────────────────────────────────
     if (req.method === "GET" && req.url === "/api/me") {
       const token = parseCookies(req).stockflow_session;
       const session = token ? sessions.get(token) : null;
@@ -174,6 +289,7 @@ async function handleApi(req, res) {
   }
 }
 
+// ── Static file server ────────────────────────────────────────────────────────
 async function serveStatic(req, res) {
   const urlPath = decodeURIComponent(req.url.split("?")[0]);
   const requested = urlPath === "/" ? "/index.html" : urlPath;
@@ -187,7 +303,9 @@ async function serveStatic(req, res) {
 
   try {
     const content = await fs.readFile(filePath);
-    res.writeHead(200, { "Content-Type": mimeTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream" });
+    res.writeHead(200, {
+      "Content-Type": mimeTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream",
+    });
     res.end(content);
   } catch {
     const index = await fs.readFile(path.join(PUBLIC_DIR, "index.html"));
@@ -196,6 +314,7 @@ async function serveStatic(req, res) {
   }
 }
 
+// ── Main server ───────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   if (req.url.startsWith("/api/")) {
     handleApi(req, res);
@@ -206,6 +325,8 @@ const server = http.createServer((req, res) => {
 
 ensureStore().then(() => {
   server.listen(PORT, () => {
-    console.log(`StockFlow app running at http://localhost:${PORT}`);
+    console.log(`StockFlow UI  → http://localhost:${PORT}`);
+    console.log(`ML backend    → ${BACKEND_API_URL}`);
+    console.log(`Predict API   → POST /api/ml/predict  (proxied)`);
   });
 });
